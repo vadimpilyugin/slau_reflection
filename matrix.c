@@ -16,6 +16,10 @@
 #define ONE 1
 #define EPS 1e-7
 
+#define SUCCESS 0
+#define ALREADY_TRIAGONAL 1
+#define ALREADY_ROTATED 2
+
 // Macros
 #define sqr(x) ((x)*(x))
 
@@ -222,6 +226,45 @@ double vector_abs_diff (Vector U, Vector V) {
 	return diff;
 }
 
+int calculate_x (int n, int k, Vector X, Matrix A) {
+	int row;
+	int col;
+
+	// считаем вектор x матрицы отражения
+	// x = (a - ||a||*e) / ||a - ||a||*e||
+
+	// S_k = sum for i = k+1..n (A[i,k]^2)
+	double s_k = 0;
+	for (row = k+1; row < n; row++)
+		s_k += sqr (A.data[INDEX(row,k,n)]);
+
+	// ||a|| = sqrt (S_k + A[k,k]^2)
+	double norm_a = sqrt (s_k + sqr(A.data[INDEX(k,k,n)]));
+	if (norm_a < EPS) {
+		// матрица приведена к треугольному виду
+		return ALREADY_TRIAGONAL;
+	}
+
+	// X[k] = A[k,k]-norm(A[k])
+	X.data[k] = A.data[INDEX(k,k,n)] - norm_a;
+
+	// X[k+1..n] = A[k+1..n,k]
+	for (row = k+1; row < n; row++)
+		X.data[row] = A.data[INDEX(row,k,n)];
+
+	// ||X|| = sqrt (S_k + X[k]^2)
+	double norm_x = sqrt (s_k + sqr (X.data[k]));
+	if (norm_x < EPS) {
+		// вектор уже повернут
+		return ALREADY_ROTATED;
+	}
+	// X = X / norm_x
+	for (row = k; row < n; row++) {
+		X.data[row] /= norm_x;
+	}
+	return SUCCESS;
+}
+
 void matrix_triagonalize (Matrix A, Vector V) {
 	if (A.size != V.size) {
 		errno = EINVAL;
@@ -236,37 +279,12 @@ void matrix_triagonalize (Matrix A, Vector V) {
 
 	for (k = 0; k < n-1; k++) {
 
-		// считаем вектор x матрицы отражения
-		// x = (a - ||a||*e) / ||a - ||a||*e||
-
-		// S_k = sum for i = k+1..n (A[i,k]^2)
-		double s_k = 0;
-		for (row = k+1; row < n; row++)
-			s_k += sqr (A.data[INDEX(row,k,n)]);
-
-		// ||a|| = sqrt (S_k + A[k,k]^2)
-		double norm_a = sqrt (s_k + sqr(A.data[INDEX(k,k,n)]));
-		if (norm_a < EPS) {
+		int code = calculate_x (n, k, X, A);
+		if (code == ALREADY_ROTATED)
+			continue;
+		else if (code == ALREADY_TRIAGONAL) {
 			vector_free (X);
 			return;
-		}
-
-		// X[k] = A[k,k]-norm(A[k])
-		X.data[k] = A.data[INDEX(k,k,n)] - norm_a;
-
-		// X[k+1..n] = A[k+1..n,k]
-		for (row = k+1; row < n; row++)
-			X.data[row] = A.data[INDEX(row,k,n)];
-
-		// ||X|| = sqrt (S_k + X[k]^2)
-		double norm_x = sqrt (s_k + sqr (X.data[k]));
-		if (norm_x < EPS) {
-			// вектор уже повернут
-			continue;
-		}
-		// X = X / norm_x
-		for (row = k; row < n; row++) {
-			X.data[row] /= norm_x;
 		}
 
 		// считаем преобразование матрицы A
