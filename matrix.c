@@ -392,7 +392,9 @@ double matrix_slau_difference (Matrix A, Vector X, Vector V) {
 	for (row = 0; row < n; row++)
 		V_calc.data[row] -= V.data[row];
 	// возвращаем норму
-	return vector_norm (V_calc);
+	double norm = vector_norm (V_calc);
+	vector_free (V_calc);
+	return norm;
 }
 
 void vector_write_to_file (Vector X, const char *filename) {
