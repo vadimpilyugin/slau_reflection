@@ -337,12 +337,8 @@ void test_slau_size (int size) {
 
 	Matrix A = matrix_new_and_fill (size, matrix_filler_random);
 	Vector V = vector_new_and_fill (size, vector_filler_random);
-	matrix_print (A);
 	matrix_triagonalize (A, V);
 	Vector X = gaussian_elimination (A, V);
-	matrix_print (A);
-	vector_print (X);
-	vector_print (V);
 	if (X.data != NULL) {
 		double diff = matrix_slau_difference (A,X,V);
 		assert (diff < EPS, "Невязка не нулевая");
@@ -371,8 +367,8 @@ int main(int argc, char **argv) {
 	test_slau_degenerate_case ();
 	test_matrix_vector_mult ();
 	int i;
-	// for (i = 0; i < 100; i++)
-		test_slau_size (8);
+	for (i = 0; i < 30; i++)
+		test_slau_size (i);
 
 	// =================== Tests ======================
 

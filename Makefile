@@ -25,7 +25,8 @@ build/tests: build/tests.o build/matrix.o
 
 run: build/main
 	# ======================
-	build/main
+	build/main 1000
+	# build/main input_file output_file
 
 test: build/tests
 	# ======================

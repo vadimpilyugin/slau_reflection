@@ -17,6 +17,6 @@ else
 	N = ARGV[1].to_i
 	(M..N).each do |i|
 		generate i
-		puts `build/main`.split("\n").keep_if{|s| s =~ /Невязка/ || s =~ /Размер/}
+		puts `build/main matrices/slau matrices/answer`.split("\n").keep_if{|s| s =~ /Невязка/ || s =~ /Размер/}
 	end
 end
