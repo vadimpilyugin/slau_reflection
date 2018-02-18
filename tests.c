@@ -2,6 +2,10 @@
 #include <stdio.h>
 // exit
 #include <stdlib.h>
+// time
+#include <time.h>
+// rand
+#include <stdlib.h>
 
 // Libraries
 #include "matrix.h"
@@ -13,6 +17,7 @@
 #define BIG 8
 #define MEDIUM 5
 #define SMALL 3
+#define EPS 1e-6
 
 int g_n; // для некоторых генераторов
 
@@ -80,6 +85,15 @@ double matrix_transformer_triagonalizer (int i, int j, double elem) {
 double matrix_filler_huge (int row, int col) {
 	// от 1 до HUGE^2
 	return row*HUGE+col+1;
+}
+double rand_d () {
+	return (rand () - RAND_MAX/2)/((double)RAND_MAX)*100;
+}
+double vector_filler_random (int row) {
+	return rand_d();
+}
+double matrix_filler_random (int row, int col) {
+	return rand_d();
 }
 
 void print_test (const char *test) {
@@ -161,7 +175,7 @@ void test_read_file () {
 	Vector V;
 	matrix_vector_new_from_file (filename, &A, &V);
 	
-	double eps = 1e-7;
+	double eps = EPS;
 	if (matrix_abs_diff (A, A_init) > eps) {
 		fprintf (stderr, "Матрицы отличаются на %lf\n", matrix_abs_diff (A, A_init));
 		assert (FALSE, NULL);
@@ -192,7 +206,7 @@ void test_triagonalization () {
 
 	Matrix A_copy = matrix_new_copy (A);
 	matrix_transform (A_copy, matrix_transformer_triagonalizer);
-	assert (matrix_abs_diff (A, A_copy) < 1e-7, "Матрица не треугольная!");
+	assert (matrix_abs_diff (A, A_copy) < EPS, "Матрица не треугольная!");
 
 	matrix_free (A);
 	vector_free (V);
@@ -213,7 +227,7 @@ void test_triagonalization_identity () {
 
 	matrix_print (A);
 
-	assert (matrix_abs_diff (A, A_copy) < 1e-7, "Матрица не диагональная!");
+	assert (matrix_abs_diff (A, A_copy) < EPS, "Матрица не диагональная!");
 
 	matrix_free (A);
 	matrix_free (A_copy);
@@ -235,7 +249,7 @@ void test_slau_solving () {
 	Vector X = gaussian_elimination (A, V);
 	vector_print (X);
 
-	double eps = 1e-5;
+	double eps = EPS;
 	assert (vector_abs_diff (X, True_X) < eps, "Решения не совпадают!");
 	printf("--- Невязка: %f\n\n", matrix_slau_difference (A, X, V));
 
@@ -261,7 +275,7 @@ void test_slau_antidiagonal () {
 	Vector X = gaussian_elimination (A, V);
 	vector_print (X);
 
-	double eps = 1e-5;
+	double eps = EPS;
 	assert (vector_abs_diff (X, True_X) < eps, "Решения не совпадают!");
 	printf("--- Невязка: %f\n\n", matrix_slau_difference (A, X, V));
 
@@ -305,7 +319,7 @@ void test_matrix_vector_mult () {
 	Vector True_Res = vector_new_and_fill (MEDIUM, vector_m_v_mult_solution);
 
 	vector_print (Res);
-	assert (vector_abs_diff (Res, True_Res) < 1e-7, NULL);
+	assert (vector_abs_diff (Res, True_Res) < EPS, NULL);
 
 	matrix_free (A);
 	vector_free (V);
@@ -316,11 +330,36 @@ void test_matrix_vector_mult () {
 	print_test (OK);
 }
 
+void test_slau_size (int size) {
+	print_test ("test_slau_size");
+	printf ("%d...", size);
+	// ======= test code ==========
+
+	Matrix A = matrix_new_and_fill (size, matrix_filler_random);
+	Vector V = vector_new_and_fill (size, vector_filler_random);
+	matrix_print (A);
+	matrix_triagonalize (A, V);
+	Vector X = gaussian_elimination (A, V);
+	matrix_print (A);
+	vector_print (X);
+	vector_print (V);
+	if (X.data != NULL) {
+		double diff = matrix_slau_difference (A,X,V);
+		assert (diff < EPS, "Невязка не нулевая");
+	}
+
+	matrix_free (A);
+	vector_free (V);
+	vector_free (X);
+
+	// ======= test code ==========
+	print_test (OK);
+}
 
 int main(int argc, char **argv) {
+	srand(time(NULL));
 
 	// =================== Tests ======================
-
 	test_hello_world ();
 	test_create_and_fill_matrix ();
 	test_create_and_fill_vector ();
@@ -331,6 +370,9 @@ int main(int argc, char **argv) {
 	test_slau_antidiagonal ();
 	test_slau_degenerate_case ();
 	test_matrix_vector_mult ();
+	int i;
+	// for (i = 0; i < 100; i++)
+		test_slau_size (8);
 
 	// =================== Tests ======================
 
