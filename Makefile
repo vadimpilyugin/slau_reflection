@@ -1,4 +1,4 @@
-CFLAGS=-Wall
+CFLAGS=-Wall -O3
 
 all: mkdir build/main build/tests
 

@@ -228,7 +228,6 @@ double vector_abs_diff (Vector U, Vector V) {
 
 int calculate_x (int n, int k, Vector X, Matrix A) {
 	int row;
-	int col;
 
 	// считаем вектор x матрицы отражения
 	// x = (a - ||a||*e) / ||a - ||a||*e||
