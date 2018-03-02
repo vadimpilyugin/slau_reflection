@@ -40,14 +40,24 @@ double stop()
 
 double matrix_filler (int row, int col) {
 	// row и col от 0
-	if (row == col)
-		return 1*(row+1);
-	else
-		return 0;
+	return 1/(row+col+1+0.0);
 }
-double vector_filler (int row) {
-	// row от 0
-	return row+1;
+
+double vector_filler (int row, Matrix A) {
+  double sum = 0;
+  for (int col = 0; col < A.size; col++)
+    if (col % 2 == 1)
+      sum += A.data[INDEX(row,col,A.size)];
+  return sum;
+}
+
+void vector_fill_by_matrix(Vector V, Matrix A) {
+  if (V.size != A.size) {
+    perror ("Размеры матрицы и вектора не совпадают!");
+    exit (ERROR);
+  }
+  for (int row = 0; row < V.size; row++)
+    V.data[row] = vector_filler(row, A);
 }
 
 // Functions
@@ -62,7 +72,9 @@ int main (int argc, char *argv[]) {
 		// иначе по формуле
 		int size = atoi (argv[ARG_SIZE]);
 		A = matrix_new_and_fill (size, matrix_filler);
-		V = vector_new_and_fill (size, vector_filler);
+		V = vector_new (size);
+		vector_fill_by_matrix (V, A);
+		// V = vector_new_and_fill (size, vector_filler);
 	} else {
 		fprintf (
 			stderr, "\n\nUsage: %s <input file> <output file>\n\tOR\n%s <size>\n", 
